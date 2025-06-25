@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import styles from '@/styles/paraulesFreq.module.css';
+import styles from '@/styles/ParaulesFreq.module.css';
 
 // Stopwords combinades per català, castellà i anglès
 const IGNOREWORDS = new Set([
