@@ -1,5 +1,7 @@
 import styles from '@/styles/HomePage.module.css';
 import ParaulesFreq from '@/components/paraulesFreq';
+import PDFReader from '@/components/PDFReader';
+import Link from 'next/link';
 
 export default function Page() {
   return (
@@ -14,6 +16,10 @@ export default function Page() {
         <section className={styles.content}>
           <ParaulesFreq />
         </section>
+        <div className="p-6 max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Lector de PDF</h1>
+          <PDFReader />
+        </div>
         <footer className={styles.footer}>
           <span>© 2025 · Martí Pardo</span>
         </footer>
