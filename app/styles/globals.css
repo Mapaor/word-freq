@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-text: #1f2937;
+  --color-muted: #6b7280;
+  --color-bg: #f9fafb;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1e40af;
+  --border-radius: 16px;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+textarea, input, button {
+  font-family: inherit;
+}
