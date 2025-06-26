@@ -79,7 +79,9 @@ const PDFReader = () => {
       }
       
       if (extractedText.trim()) {
-        setText(extractedText.trim());
+        // Apply accent correction to the extracted text
+        const correctedText = corregeixAccents(extractedText.trim());
+        setText(correctedText);
       } else {
         setText('No s\'ha pogut extreure text d\'aquest PDF. És possible que sigui un PDF d\'imatges o que estigui protegit.');
       }
@@ -111,6 +113,138 @@ const PDFReader = () => {
       console.error('Failed to copy text:', err);
       setError('No s\'ha pogut copiar el text');
     }
+  };
+
+  // Function to correct malformed accents from LaTeX PDFs
+  const corregeixAccents = (text) => {
+    // Codificar el text com a URI per evitar problemes amb caràcters especials
+    const encodedText = encodeURIComponent(text);
+    
+    // Substituir seqüències problemàtiques abans de decodificar
+    const replacements = [
+      { pattern: /%C2%60/g, replacement: '%60' },  // ` mal codificat
+      { pattern: /%C2%B4/g, replacement: '%27' },  // ´ mal codificat
+      { pattern: /%C2%A8/g, replacement: '%22' },  // ¨ mal codificat
+      { pattern: /%20%60/g, replacement: '%60' },  // espai + `
+      { pattern: /%20%B4/g, replacement: '%B4' },  // espai + ´
+      { pattern: /%20%A8/g, replacement: '%A8' }   // espai + ¨
+    ];
+
+    let processed = encodedText;
+    replacements.forEach(({pattern, replacement}) => {
+      processed = processed.replace(pattern, replacement);
+    });
+
+    // Decodificar i aplicar correccions d'accents
+    const decodedText = decodeURIComponent(processed);
+    
+    const accentReplacements = [
+      // Correccions específiques per paraules problemàtiques completes
+      { pattern: /CAP\s+'\s+ITOL/g, replacement: 'CAPÍTOL' },
+      // Correccions amb apòstrof simple (') - casos més comuns en LaTeX
+      { pattern: /'\s+a/g, replacement: 'á' },      // ' a -> á (agut)
+      { pattern: /'\s+e/g, replacement: 'é' },      // ' e -> é (agut)
+      { pattern: /'\s+i/g, replacement: 'í' },      // ' i -> í (agut)
+      { pattern: /'\s+ı/g, replacement: 'í' },      // ' ı -> í (LaTeX dotless i) - per F'ısica
+      { pattern: /'\s+o/g, replacement: 'ó' },      // ' o -> ó (agut) - per equaci'o
+      { pattern: /'\s+u/g, replacement: 'ú' },      // ' u -> ú (agut)
+      
+      // Correccions per títols en majúscules amb apòstrof
+      { pattern: /'\s+A/g, replacement: 'Á' },      // ' A -> Á
+      { pattern: /'\s+E/g, replacement: 'É' },      // ' E -> É
+      { pattern: /'\s+I/g, replacement: 'Í' },      // ' I -> Í - per CAP'ITOL
+      { pattern: /'\s+O/g, replacement: 'Ó' },      // ' O -> Ó
+      { pattern: /'\s+U/g, replacement: 'Ú' },      // ' U -> Ú
+      
+      // Correccions amb dièresi doble cometes (") - per Schr"odinger
+      { pattern: /"\s+a/g, replacement: 'ä' },      // "a -> ä
+      { pattern: /"\s+e/g, replacement: 'ë' },      // "e -> ë  
+      { pattern: /"\s+i/g, replacement: 'ï' },      // "i -> ï
+      { pattern: /"\s+o/g, replacement: 'ö' },      // "o -> ö - per Schr"odinger
+      { pattern: /"\s+u/g, replacement: 'ü' },      // "u -> ü
+      
+      // Correccions específiques per a català amb greus i aguts originals
+      { pattern: /`\s+a/g, replacement: 'à' },
+      { pattern: /´\s+e/g, replacement: 'é' },
+      { pattern: /`\s+e/g, replacement: 'è' },
+      { pattern: /´\s+o/g, replacement: 'ó' },
+      { pattern: /`\s+o/g, replacement: 'ò' },
+      { pattern: /´\s+i/g, replacement: 'í' },
+      { pattern: /`\s+i/g, replacement: 'ì' },
+      { pattern: /´\s+u/g, replacement: 'ú' },
+      { pattern: /¨\s+u/g, replacement: 'ü' },
+      
+      // Correccions per títols en majúscules amb accents greus i aguts
+      { pattern: /`\s+A/g, replacement: 'À' },      // ` A -> À - per MEC`ANICA
+      { pattern: /´\s+E/g, replacement: 'É' },      // ´ E -> É
+      { pattern: /`\s+E/g, replacement: 'È' },      // ` E -> È
+      { pattern: /´\s+O/g, replacement: 'Ó' },      // ´ O -> Ó
+      { pattern: /`\s+O/g, replacement: 'Ò' },      // ` O -> Ò
+      { pattern: /´\s+I/g, replacement: 'Í' },      // ´ I -> Í
+      { pattern: /`\s+I/g, replacement: 'Ì' },      // ` I -> Ì
+      { pattern: /´\s+U/g, replacement: 'Ú' },      // ´ U -> Ú
+      { pattern: /¨\s+U/g, replacement: 'Ü' },      // ¨ U -> Ü
+      { pattern: /l\s*·\s*l/g, replacement: 'l·l' },
+      
+      // Correccions per ela geminada amb punt i espais
+      { pattern: /l\s*\.\s*l/g, replacement: 'l·l' },   // l . l -> l·l (oscil . lador)
+      { pattern: /l\s*\.\s*L/g, replacement: 'l·L' },   // l . L -> l·L (inici de paraula)
+      
+      // Casos sense espai - apòstrof simple
+      { pattern: /'a/g, replacement: 'á' },
+      { pattern: /'e/g, replacement: 'é' },
+      { pattern: /'i/g, replacement: 'í' },
+      { pattern: /'ı/g, replacement: 'í' },         // LaTeX dotless i sense espai
+      { pattern: /'o/g, replacement: 'ó' },
+      { pattern: /'u/g, replacement: 'ú' },
+      
+      // Casos sense espai - majúscules amb apòstrof
+      { pattern: /'A/g, replacement: 'Á' },
+      { pattern: /'E/g, replacement: 'É' },
+      { pattern: /'I/g, replacement: 'Í' },
+      { pattern: /'O/g, replacement: 'Ó' },
+      { pattern: /'U/g, replacement: 'Ú' },
+      
+      // Casos sense espai - dièresi
+      { pattern: /"a/g, replacement: 'ä' },
+      { pattern: /"e/g, replacement: 'ë' },
+      { pattern: /"i/g, replacement: 'ï' },
+      { pattern: /"o/g, replacement: 'ö' },
+      { pattern: /"u/g, replacement: 'ü' },
+      
+      // Casos generals originals (sense espai)
+      { pattern: /`a/g, replacement: 'à' },
+      { pattern: /´e/g, replacement: 'é' },
+      { pattern: /`e/g, replacement: 'è' },
+      { pattern: /´o/g, replacement: 'ó' },
+      { pattern: /`o/g, replacement: 'ò' },
+      { pattern: /´i/g, replacement: 'í' },
+      { pattern: /`i/g, replacement: 'ì' },
+      { pattern: /´u/g, replacement: 'ú' },
+      { pattern: /¨u/g, replacement: 'ü' },
+      
+      // Casos generals - majúscules sense espai
+      { pattern: /`A/g, replacement: 'À' },
+      { pattern: /´E/g, replacement: 'É' },
+      { pattern: /`E/g, replacement: 'È' },
+      { pattern: /´O/g, replacement: 'Ó' },
+      { pattern: /`O/g, replacement: 'Ò' },
+      { pattern: /´I/g, replacement: 'Í' },
+      { pattern: /`I/g, replacement: 'Ì' },
+      { pattern: /´U/g, replacement: 'Ú' },
+      { pattern: /¨U/g, replacement: 'Ü' },
+      
+      // Casos sense espai - ela geminada
+      { pattern: /l\.l/g, replacement: 'l·l' },         // l.l -> l·l
+      { pattern: /l\.L/g, replacement: 'l·L' }          // l.L -> l·L
+    ];
+
+    let result = decodedText;
+    accentReplacements.forEach(({pattern, replacement}) => {
+      result = result.replace(pattern, replacement);
+    });
+
+    return result;
   };
 
   return (
