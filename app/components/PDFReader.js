@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './PDFReader.module.css';
 
 const PDFReader = () => {
@@ -8,6 +8,31 @@ const PDFReader = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [pdfJsLoaded, setPdfJsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Load PDF.js from Mozilla CDN
+    const loadPdfJs = () => {
+      if (typeof window !== 'undefined' && !window.pdfjsLib) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        script.onload = () => {
+          // Set up the worker
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          setPdfJsLoaded(true);
+          console.log('PDF.js loaded successfully');
+        };
+        script.onerror = () => {
+          setError('No s\'ha pogut carregar PDF.js');
+        };
+        document.head.appendChild(script);
+      } else if (window.pdfjsLib) {
+        setPdfJsLoaded(true);
+      }
+    };
+
+    loadPdfJs();
+  }, []);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -16,54 +41,75 @@ const PDFReader = () => {
       return;
     }
 
+    if (!pdfJsLoaded) {
+      setError('PDF.js encara no està carregat. Prova de nou en uns segons.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setText('');
 
     try {
-      // 👇 Importem pdfjsDist només al client
-      const pdfjsLib = await import('pdfjs-dist/build/pdf');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.mjs';
+      const arrayBuffer = await file.arrayBuffer();
+      const typedArray = new Uint8Array(arrayBuffer);
+      
+      // Load the PDF document using Mozilla's PDF.js
+      const pdf = await window.pdfjsLib.getDocument({
+        data: typedArray,
+        verbosity: 0,
+      }).promise;
 
-
-      const reader = new FileReader();
-      reader.onload = async function () {
-        const typedArray = new Uint8Array(reader.result);
-        try {
-          const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
-          let extractedText = '';
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const strings = content.items.map(item => item.str);
-            extractedText += strings.join(' ') + '\n';
-          }
-
-          setText(extractedText);
-        } catch (err) {
-          console.error(err);
-          setError('Error en llegir el PDF.');
-        } finally {
-          setLoading(false);
+      let extractedText = '';
+      
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // Join all text items with spaces and preserve some structure
+        const pageText = textContent.items
+          .map(item => item.str)
+          .join(' ')
+          .trim();
+        
+        if (pageText) {
+          extractedText += pageText + '\n\n';
         }
-      };
-
-      reader.readAsArrayBuffer(file);
+      }
+      
+      if (extractedText.trim()) {
+        setText(extractedText.trim());
+      } else {
+        setText('No s\'ha pogut extreure text d\'aquest PDF. És possible que sigui un PDF d\'imatges o que estigui protegit.');
+      }
+      
     } catch (err) {
-      console.error(err);
-      setError('No s\'ha pogut carregar el lector de PDF.');
+      console.error('Error en processar PDF:', err);
+      setError(`Error en llegir PDF: ${err.message || 'Error desconegut'}`);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleCopyText = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback per a Safari més antic
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy text:', err);
+      setError('No s\'ha pogut copiar el text');
     }
   };
 
@@ -115,7 +161,6 @@ const PDFReader = () => {
       )}
     </div>
   );
-
 };
 
 export default PDFReader;

@@ -8,14 +8,17 @@ const IGNOREWORDS = new Set([
     // Lletres individuals
     "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z",
     // Números
-    "0","1","2","3","4","5","6","7","8","9",
+    "0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30",
+    "uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve","treinta",
+    "un","dos","tres","quatre","cinc","sis","set","vuit","nou","deu","onze","dotze","tretze","catorze","quinze","setze","disset","divuit","dinou","vint","vint-i-u","vint-i-dos","vint-i-tres","vint-i-quatre","vint-i-cinc","vint-i-sis","vint-i-set","vint-i-vuit","vint-i-nou","trenta",
+    "one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty-one","twenty-two","twenty-three","twenty-four","twenty-five","twenty-six","twenty-seven","twenty-eight","twenty-nine","thirty",
     // Símbols
     "!",'"',"#","$","%","&","'","(",")","*","+","-",".","/","<",">","?","@","[","\\","]","^","_","`","{","|","}","~",
     // Català
     "el","la","els","les","un","una","uns","unes","i","o","però","com","si","en","amb","de","a","per","que","què","quan","on","hi","li","al","del","dels","als","més","menys","ja","no","sí","també","molt","poc","són","era","és","s'ha","han","va","van","he","has","hem","havent","això","allò","aquesta","aquest","aquell","aquella","meu","meua","seu","seva","teu","teva","nostre","vostre","d'ells","entre","havia","fins",
     "doncs","tot","res","cap","alguna","alguns","algunes","algú","ningú","aquí","allí","allà","després","abans","sempre","mai","encara","mentre","durant","sobretot","només","potser","qualsevol","cadascú","altres","tothom","cosa","fet","fer","tenia","tenim","tenen","tens","tinc",
     // Castellà
-    "el","la","los","las","un","una","unos","unas","y","o","pero","como","si","en","con","de","a","por","que","cuando","donde","se","le","al","del","más","menos","ya","no","sí","también","muy","poco","son","era","es","ha","han",
+    "el","la","los","las","un","una","unos","unas","y","o","pero","como","si","en","con","de","a","por","que","cuando","donde","se","le","al","del","más","menos","ya","no","sí","también","muy","poco","son","era","es","ha","han","este","ese","esa","aquel","aquella","mi","tu","su","nuestro","vuestro","mío","tuyo","suyo","nuestro","vuestro","entre","había","hasta",
     "entonces","todo","nada","ninguno","ninguna","alguno","algunos","algunas","alguien","nadie","aquí","allí","allá","después","antes","siempre","nunca","todavía","mientras","durante","sobre","solo","quizás","talvez","cualquiera","cada","otro","todos","todas","cosa","hecho","hacer","tenía","tenemos","tienen","tienes","tengo",
     // Anglès
     "the","a","an","and","or","but","if","in","with","of","to","for","this","that","which","when","where","is","are","was","were","be","been","has","have","had","it","its","on","at","by","as","from","I","my","mine","you","your","yours","he","him","his","she","her","hers","us","our","ours","they","their","theirs","about",
@@ -68,7 +71,7 @@ export default function ParaulesFreq() {
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.heading}>
-        Paraules més freqüents
+        Paraules rellevants més freqüents
       </h2>
 
       <textarea
